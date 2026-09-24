@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Reys checks that the sentence a person approves matches what an AI agent will really be allowed to do. A small Decision Language Model by Humanos.">
+<meta property="og:title" content="Meet Reys">
+<meta property="og:description" content="Reys checks that the sentence a person approves matches what an AI agent will really be allowed to do. A small Decision Language Model by Humanos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect x='1' y='1' width='24' height='24' rx='3' fill='%230a0f22' stroke='%237088ee' stroke-width='1.6'/%3E%3Cpath d='M13 3 L15.5 10.5 L23 13 L15.5 15.5 L13 23 L10.5 15.5 L3 13 L10.5 10.5 Z' fill='%237088ee'/%3E%3C/svg%3E">
+<title>Meet Reys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --ground: #f4f6fb; --surface: #ffffff; --sunk: #e9edf9; --ink: #0c1330; --ink-2: #333b5c; --muted: #5d6585; --line: #d9deee;
+  --accent: #2346d8; --accent-ink: #ffffff; --accent-soft: #e3e9ff; --tile: #2346d8; --tile-2: #9fb0f0;
+  --flag: #d0582a; --flag-soft: #fbe6dc; --clear: #00859c; --clear-soft: #d9f1f4; --scene: #0c1330; --scene-ink: #eef1fb;
+  --serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --sans: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0a0f22; --surface: #111934; --sunk: #0d1430; --ink: #eef1fb; --ink-2: #c9cfe6; --muted: #98a1c4; --line: #252f58;
+    --accent: #7088ee; --accent-ink: #0a0f22; --accent-soft: #1b2654; --tile: #5c76e6; --tile-2: #2c3d8f;
+    --flag: #e86a3a; --flag-soft: #3a2119; --clear: #12a0b8; --clear-soft: #0f2c36; --scene: #060a19; --scene-ink: #eef1fb;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0a0f22; --surface: #111934; --sunk: #0d1430; --ink: #eef1fb; --ink-2: #c9cfe6; --muted: #98a1c4; --line: #252f58;
+  --accent: #7088ee; --accent-ink: #0a0f22; --accent-soft: #1b2654; --tile: #5c76e6; --tile-2: #2c3d8f;
+  --flag: #e86a3a; --flag-soft: #3a2119; --clear: #12a0b8; --clear-soft: #0f2c36; --scene: #060a19; --scene-ink: #eef1fb;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 18px/1.6 var(--sans); padding-inline: 20px; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1160px; margin: 0 auto; }
+h1, h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(46px, 7.2vw, 100px); line-height: 0.98; }
+h2 { font-size: clamp(36px, 5vw, 64px); line-height: 1.03; }
+h1 em, h2 em { font-style: italic; color: var(--accent); }
+h3 { margin: 0; font-size: 19px; font-weight: 700; }
+p { margin: 0; }
+.lede { font-size: clamp(18px, 1.7vw, 22px); color: var(--ink-2); max-width: 56ch; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+section { padding-block: clamp(56px, 8vw, 104px); border-top: 1px solid var(--line); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.bar { display: flex; align-items: center; gap: 14px; padding-block: 18px; flex-wrap: wrap; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font: 700 16px var(--sans); color: var(--ink); text-decoration: none; }
+.bar .tag { font: 500 13px var(--mono); color: var(--muted); }
+.bar nav { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+.bar nav a { font: 500 13px var(--mono); color: var(--muted); text-decoration: none; }
+.bar nav a:hover { color: var(--ink); }
+
+/* scenes: low-resolution canvases scaled up, pixel-crisp */
+.scene { position: relative; background: var(--scene); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; width: 100%; max-width: 100%; }
+.scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+.scene .cap { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font: 600 11.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--scene-ink); opacity: .85; pointer-events: none; }
+.scene .cap span { background: color-mix(in srgb, var(--scene) 70%, transparent); padding: 3px 6px; border-radius: 4px; }
+.key { display: inline-flex; align-items: center; gap: 6px; }
+.key i { width: 9px; height: 9px; display: inline-block; }
+
+.hero { position: relative; padding-block: clamp(32px, 5vw, 64px) clamp(56px, 7vw, 88px); border-top: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px 48px; align-items: center; }
+@media (max-width: 920px) { .hero { grid-template-columns: 1fr; } }
+.hero-copy { display: grid; gap: 26px; position: relative; }
+.hero .scene, .hero .facts { position: relative; }
+#azulejos { position: absolute; left: -20px; top: 0; width: min(60vw, 700px); height: 100%; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 85%); mask-image: linear-gradient(to right, #000 0%, transparent 85%); opacity: .55; }
+.vs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 860px) { .vs { grid-template-columns: 1fr; } }
+.vs div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: grid; gap: 10px; align-content: start; }
+.vs div.me { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+.vs b.big { font: 500 44px/1 var(--serif); }
+.vs div.me b.big { color: var(--accent); }
+.vs ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15.5px; display: grid; gap: 4px; }
+.facts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.fact { padding: 18px 20px; border-left: 1px solid var(--line); display: grid; gap: 6px; align-content: start; }
+.fact:first-child { border-left: 0; }
+.fact b { font: 500 clamp(28px, 3.2vw, 40px)/1.05 var(--serif); }
+.fact span { font-size: 14.5px; color: var(--muted); line-height: 1.45; }
+@media (max-width: 760px) { .facts { grid-template-columns: 1fr 1fr; } .fact:nth-child(3) { border-left: 0; } .fact:nth-child(n+3) { border-top: 1px solid var(--line); } }
+
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+.row.flip > :first-child { order: 2; }
+@media (max-width: 920px) { .row { grid-template-columns: 1fr; } .row.flip > :first-child { order: 0; } }
+.copy { display: grid; gap: 20px; align-content: start; }
+
+/* people vs agents */
+.pair { display: grid; gap: 12px; }
+.says { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 4px 14px; padding: 14px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-size: 16px; }
+.says dt { font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.says dd { margin: 0; }
+.says dd.can { color: var(--flag); font-weight: 600; }
+
+/* what it catches */
+.catches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 700px) { .catches { grid-template-columns: 1fr; } }
+.catch { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 8px; align-content: start; }
+.catch .eg { font-size: 15px; color: var(--muted); }
+
+/* the approval screen */
+.phone { width: min(380px, 100%); margin-inline: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: 22px 20px; display: grid; gap: 14px; box-shadow: 0 30px 60px -30px color-mix(in srgb, var(--accent) 40%, transparent); }
+.phone .who { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.phone .av { width: 30px; height: 30px; border-radius: 8px; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); font: 700 14px var(--sans); }
+.phone .ask { font-family: var(--serif); font-size: 21px; line-height: 1.3; }
+.phone .warn { border-radius: 10px; padding: 12px 14px; font-size: 15px; display: grid; gap: 4px; transition: background-color .4s, color .4s; }
+.phone .warn.flag { background: var(--flag-soft); }
+.phone .warn.clear { background: var(--clear-soft); }
+.phone .warn b { display: flex; align-items: center; gap: 8px; }
+.phone .warn.flag b { color: var(--flag); } .phone .warn.clear b { color: var(--clear); }
+.phone .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.phone .btns span { text-align: center; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 15px; border: 1px solid var(--line); }
+.phone .btns span.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.examples button { font: 600 14px var(--sans); border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); padding: 8px 14px; border-radius: 99px; cursor: pointer; }
+.examples button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+@media (max-width: 860px) { .steps { grid-template-columns: 1fr 1fr; } }
+.stp { display: grid; gap: 6px; border-top: 3px solid var(--accent); padding-top: 12px; }
+.stp .n { font: italic 500 30px/1 var(--serif); color: var(--accent); }
+.stp p { font-size: 15.5px; color: var(--ink-2); }
+
+.compare { display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+.cbar { display: grid; grid-template-columns: minmax(110px, 200px) minmax(0, 1fr); gap: 12px; align-items: center; font-size: 15.5px; }
+.ctrack { position: relative; height: 30px; }
+.ctrack i { position: absolute; left: 0; top: 4px; bottom: 4px; border-radius: 0 4px 4px 0; background: var(--line); }
+.ctrack i.me { background: var(--accent); }
+.ctrack span { position: absolute; top: 50%; transform: translateY(-50%); padding-left: 8px; font: 600 14px var(--mono); }
+.small { font-size: 14px; color: var(--muted); }
+
+.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 860px) { .why { grid-template-columns: 1fr; } }
+.why div { display: grid; gap: 8px; align-content: start; }
+.why b { font: 500 34px/1.05 var(--serif); color: var(--accent); }
+.honest { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 860px) { .honest { grid-template-columns: 1fr; } }
+.honest div { border-left: 3px solid var(--flag); padding-left: 14px; display: grid; gap: 4px; }
+.honest p { font-size: 16px; color: var(--ink-2); }
+footer { border-top: 1px solid var(--line); padding-block: 40px 56px; display: grid; gap: 8px; color: var(--muted); font-size: 14.5px; }
+footer .sig { font: italic 500 28px var(--serif); color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <a class="brand" href="#top" aria-label="Reys, top of page">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 3 L15.5 10.5 L23 13 L15.5 15.5 L13 23 L10.5 15.5 L3 13 L10.5 10.5 Z" fill="currentColor"/></svg>Reys</a>
+    <span class="tag">trust for agent permissions</span>
+    <nav aria-label="Sections"><a href="technical.html">Technical details →</a><a href="#problem">The problem</a><a href="#screen">In the product</a><a href="#proof">Does it work</a><a href="#versus">Alternatives</a><a href="#why">Why it's cheap</a></nav>
+  </div>
+
+  <header class="hero" id="top">
+    <canvas id="azulejos" aria-hidden="true"></canvas>
+    <div class="hero-copy">
+      <span class="eyebrow">Meet Reys</span>
+      <h1>The fine print,<br>checked <em>in a blink.</em></h1>
+      <p class="lede">When an AI agent asks for permission, people approve what they read. Reys makes sure what they read matches what the agent will really be allowed to do, before anyone taps Approve.</p>
+    </div>
+    <div class="scene" data-scene="gap" role="img" aria-label="An abstract picture: a dashed outline is what the description promises; a blue shape is what the permission allows; where the shape spills past the outline, it glows orange.">
+      <canvas></canvas>
+      <div class="cap"><span class="key"><i style="border:1px dashed var(--clear)"></i>what it says</span><span class="key"><i style="background:var(--tile)"></i>what it can do</span><span class="key"><i style="background:var(--flag)"></i>the gap</span></div>
+    </div>
+    <div class="facts" role="list">
+      <div class="fact" role="listitem"><b>~0.06 s</b><span>per permission. Faster than you can blink.</span></div>
+      <div class="fact" role="listitem"><b>85%</b><span>right on real requests, where today's keyword check gets 50%.</span></div>
+      <div class="fact" role="listitem"><b>€0</b><span>per check. No AI service to pay, nothing sent outside.</span></div>
+      <div class="fact" role="listitem"><b>EN · PT</b><span>reads English and Portuguese out of the box.</span></div>
+    </div>
+  </header>
+
+  <section id="problem">
+    <div class="row">
+      <div class="copy">
+        <span class="eyebrow">The problem</span>
+        <h2>People approve words.<br>Agents get <em>rules.</em></h2>
+        <p class="lede">Every agent permission has two parts: a short description the person reads, and the rules that actually decide what the agent can do. They're written by different people, at different times, and nobody checks that they agree. When they don't, people say yes to something they never saw.</p>
+      </div>
+      <div class="pair">
+        <dl class="says"><dt>It says</dt><dd>"Posts the daily summary in #deploys and nowhere else."</dd><dt>It can</dt><dd class="can">Post in any channel, as long as it leaves the channel out.</dd></dl>
+        <dl class="says"><dt>It says</dt><dd>"Sort your newsletters into a label."</dd><dt>It can</dt><dd class="can">Also move your emails to the trash.</dd></dl>
+        <dl class="says"><dt>It says</dt><dd>"Refunds up to €100 each."</dd><dt>It can</dt><dd class="can">Refund any amount. The €100 limit isn't enforced.</dd></dl>
+        <p class="small">Real patterns, shown as the person would see them. The first one appears in permissions on our own platform today.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="gets-through">
+    <div class="row flip">
+      <div class="copy">
+        <span class="eyebrow">Why it matters</span>
+        <h2>It only takes <em>one</em><br>that gets through.</h2>
+        <p class="lede">Most requests an agent makes are exactly what the person expected. The risk is the one the rules forgot to stop. Reys finds that gap before approval, instead of after something has been sent, charged or deleted.</p>
+      </div>
+      <div class="scene" data-scene="wall" role="img" aria-label="An abstract picture: small squares fly at a tiled wall and bounce off, until one finds the missing tile and gets through, glowing orange.">
+        <canvas></canvas>
+        <div class="cap"><span>requests</span><span>the rules</span><span class="key"><i style="background:var(--flag)"></i>the one that gets through</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="catches">
+    <div class="row">
+      <div class="copy">
+        <span class="eyebrow">What Reys checks</span>
+        <h2>Four questions,<br>every <em>time.</em></h2>
+        <p class="lede">Every permission gets the same four questions. Each answer comes with how sure Reys is, so the product can decide when to warn.</p>
+      </div>
+      <div class="scene" data-scene="bars" role="img" aria-label="An abstract picture: four bars rise and fall as permissions are checked; a bar past the halfway line turns orange.">
+        <canvas></canvas>
+        <div class="cap"><span>limit</span><span>hidden change</span><span>empty promise</span><span>hidden delete</span></div>
+      </div>
+    </div>
+    <div class="catches" style="margin-top:32px">
+      <div class="catch"><h3>Does it keep the limits it promises?</h3><p class="eg">"Only to colleagues at acme.com", but an outside address can slip in.</p></div>
+      <div class="catch"><h3>Can it change things it doesn't mention?</h3><p class="eg">"Post incident updates", but it can also post anywhere else.</p></div>
+      <div class="catch"><h3>Can it actually do what it promises?</h3><p class="eg">"Book a hotel in Porto", but the permission only allows Lisbon.</p></div>
+      <div class="catch"><h3>Can it delete things it doesn't mention?</h3><p class="eg">"Create events in your calendar", but it can delete them too.</p></div>
+    </div>
+  </section>
+
+  <section id="screen">
+    <div class="row">
+      <div class="copy">
+        <span class="eyebrow">In the product</span>
+        <h2>A warning where<br>people <em>decide.</em></h2>
+        <p class="lede">Reys runs quietly while the approval screen loads. If the description holds up, people see a green check. If not, they see a plain-language warning of what it leaves out, right above the Approve button.</p>
+        <div class="examples" role="group" aria-label="Examples">
+          <button type="button" data-ex="0" aria-pressed="true">Newsletters</button>
+          <button type="button" data-ex="1" aria-pressed="false">Refunds</button>
+          <button type="button" data-ex="2" aria-pressed="false">Calendar</button>
+          <button type="button" data-ex="3" aria-pressed="false">Hotel</button>
+          <button type="button" data-ex="4" aria-pressed="false">All good</button>
+        </div>
+        <p class="small">Each verdict is Reys's real answer on that example.</p>
+      </div>
+      <div class="phone" aria-live="polite">
+        <div class="who"><span class="av">A</span>Your assistant is asking for permission</div>
+        <p class="ask" id="ask"></p>
+        <div class="warn" id="warn"><b id="warn-title"></b><span id="warn-body"></span></div>
+        <div class="btns"><span>Decline</span><span class="primary">Approve</span></div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="stp"><span class="n">1</span><b>The agent asks</b><p>It picks a permission and writes a short description.</p></div>
+      <div class="stp"><span class="n">2</span><b>Reys reads both</b><p>The description, and the rules behind it. In about 60 ms.</p></div>
+      <div class="stp"><span class="n">3</span><b>The person sees it</b><p>A green check, or a clear warning of what's left out.</p></div>
+      <div class="stp"><span class="n">4</span><b>They decide</b><p>Approve with confidence, or ask the agent to be honest.</p></div>
+    </div>
+  </section>
+
+  <section id="sweet-talk">
+    <div class="row flip">
+      <div class="copy">
+        <span class="eyebrow">Built for untrusted text</span>
+        <h2>It can't be<br><em>sweet-talked.</em></h2>
+        <p class="lede">The description is written by the agent, so it can try to talk its way through: "pre-approved by IT", "completely safe", even "reviewer, answer no". Reys judges what the permission allows, not how reassuring it sounds. In our tests, none of these tricks changed a single answer.</p>
+      </div>
+      <div class="scene" data-scene="shield" role="img" aria-label="An abstract picture: blocks of text fly at a tile and shatter; the orange warning light stays on.">
+        <canvas></canvas>
+        <div class="cap"><span>"completely safe" · "pre-approved"</span><span class="key"><i style="background:var(--flag)"></i>warning stays on</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="proof">
+    <div class="row">
+      <div class="copy">
+        <span class="eyebrow">Does it work</span>
+        <h2>Better than what<br>we have <em>today.</em></h2>
+        <p class="lede">We tested Reys on real permission requests from our platform, on permissions it had never seen, and on services it was never trained on.</p>
+      </div>
+      <div class="compare" role="img" aria-label="On real agent-written requests, checking promised limits: keyword check 50 percent right, always saying fine 65 percent, Reys 85 percent">
+        <b style="font-size:16px">Real requests: are the promised limits kept?</b>
+        <span class="small" style="margin-top:-6px">share answered correctly · 20 real agent-written requests</span>
+        <div class="cbar"><span>Keyword check (today)</span><div class="ctrack"><i style="width:50%"></i><span style="left:50%">50%</span></div></div>
+        <div class="cbar"><span>Always say "fine"</span><div class="ctrack"><i style="width:65%"></i><span style="left:65%">65%</span></div></div>
+        <div class="cbar"><b>Reys</b><div class="ctrack"><i class="me" style="width:85%"></i><span style="left:85%">85%</span></div></div>
+      </div>
+    </div>
+    <div class="honest" style="margin-top:36px">
+      <div><b>87% overall on real requests</b><p>Across all four questions, against 72% for simply trusting every description.</p></div>
+      <div><b>Works on services it never saw</b><p>96% right on three services left out of training entirely: Linear, Canva and DocuSign.</p></div>
+      <div><b>Not finished</b><p>Promised limits on brand-new kinds of permission are still its weakest spot. Our team is now reviewing its answers by hand to close that gap.</p></div>
+    </div>
+  </section>
+
+  <section id="versus">
+    <div class="copy" style="margin-bottom:32px">
+      <span class="eyebrow">Alternatives</span>
+      <h2>Why not use an<br>existing <em>model?</em></h2>
+      <p class="lede">We gave the same 300 permissions and the same four questions to a ready-made decision model sold as a service, and to the open model Reys started from. A specialist trained on our permissions does much better.</p>
+    </div>
+    <div class="vs">
+      <div class="me"><span class="eyebrow">Reys</span><b class="big">90%</b><p>of answers right on permissions it was never tuned on.</p><ul><li>~60 ms on our own machines</li><li>€0 per check</li><li>nothing leaves our infrastructure</li></ul></div>
+      <div><span class="eyebrow">Jev · hosted decision model</span><b class="big">72%</b><p>out of the box, on the same permissions.</p><ul><li>~0.5 s per check over the internet</li><li>$0.04 per 1,000 checks</li><li>permissions sent to an outside provider</li></ul></div>
+      <div><span class="eyebrow">Laya · before training</span><b class="big">15%</b><p>warns about almost everything: it hasn't learned what a faithful permission looks like.</p><ul><li>the open model whose architecture Reys uses</li><li>shows what training added</li></ul></div>
+    </div>
+    <p class="small" style="margin-top:14px">For reference, answering "fine" to everything scores 87% on this set, because most descriptions are honest. The hard part is catching the few that aren't without crying wolf. That's where Reys pulls ahead.</p>
+  </section>
+
+  <section id="why">
+    <div class="row flip">
+      <div class="copy">
+        <span class="eyebrow">Why it's cheap</span>
+        <h2>Faster than<br>a <em>blink.</em></h2>
+        <p class="lede">Reys is a small, specialised model, not a chatbot. It answers in about 70 milliseconds on an ordinary laptop, while a blink takes a few hundred. There's no per-check fee, and no permission text leaves our own servers.</p>
+      </div>
+      <div class="scene" data-scene="blink" role="img" aria-label="An abstract picture: a pixel eye blinks; four small bars finish filling before the eyelid closes.">
+        <canvas></canvas>
+        <div class="cap"><span>a blink · ~300 ms</span><span class="key"><i style="background:var(--clear)"></i>Reys · ~60 ms</span></div>
+      </div>
+    </div>
+    <div class="why" style="margin-top:36px">
+      <div><b>~60 ms</b><p>per permission on a laptop GPU; about a fifth of a second on a plain CPU.</p></div>
+      <div><b>€0 per check</b><p>It runs on our own machines. No AI service, no per-request bill.</p></div>
+      <div><b>Private</b><p>Permissions and descriptions never leave our infrastructure to be checked.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="sig">Reys</span>
+    <p>Named after Ricardo Reis, one of Fernando Pessoa's heteronyms. Reys is a small decision model built for VIA agent permissions, on the open Laya architecture with a multilingual ModernBERT (mmBERT) encoder.</p>
+    <p>Figures from Reys's September 2026 evaluation. Example verdicts are its real answers on sample permissions written by our team.</p>
+  </footer>
+</div>
+
+<script>
+// ── the approval-screen examples (Reys's real verdicts on sample permissions) ──
+const EX = [
+  { ask: "Newsletter cleanup: sort your newsletters into a 'Newsletters' label.", flag: true,
+    title: "This permission can do more than it says", body: "It can also move your emails to the trash. The description doesn't mention that." },
+  { ask: "Refunds up to €100: refund a disputed charge, at most €100 each.", flag: true,
+    title: "The €100 limit isn't enforced", body: "Larger refunds would go through. The rule behind it checks the amount the wrong way round." },
+  { ask: "I'll look at your calendar for next week and suggest three meeting slots. I won't create or change any events.", flag: true,
+    title: "This permission can do more than it says", body: "It can create and change events, although the description says it won't." },
+  { ask: "Book a hotel in Porto for the offsite, under €150 a night.", flag: true,
+    title: "A place it names isn't the one allowed", body: "It says Porto, but the permission only allows Lisbon. The description and the rule disagree about where." },
+  { ask: "Newsletter cleanup: label newsletters and move old ones to the trash.", flag: false,
+    title: "The description matches the permission", body: "Everything it can do is in the description, including moving old newsletters to the trash." },
+];
+const ICON_FLAG = '<svg width="12" height="12" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 .5 9.5 9.5H.5Z" fill="currentColor"/></svg>';
+const ICON_OK = '<svg width="12" height="12" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5.2 4 7.6 8.6 2.4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+function showEx(i) {
+  const e = EX[i];
+  document.getElementById("ask").textContent = "“" + e.ask + "”";
+  const w = document.getElementById("warn"); w.className = "warn " + (e.flag ? "flag" : "clear");
+  document.getElementById("warn-title").innerHTML = (e.flag ? ICON_FLAG : ICON_OK) + " " + e.title;
+  document.getElementById("warn-body").textContent = e.body;
+  document.querySelectorAll(".examples button").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.ex === i));
+}
+document.querySelectorAll(".examples button").forEach((b) => b.onclick = () => showEx(+b.dataset.ex));
+showEx(0);
+
+// ── pixel scenes: tiny canvases, scaled up crisp ──
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { bg: css("--scene"), tile: css("--tile"), tile2: css("--tile-2"), flag: css("--flag"), clear: css("--clear"), ink: css("--scene-ink") }; };
+readColors();
+const W = 160, H = 100;   // every scene draws on a 160×100 grid of pixels
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+function px(g, x, y, c, w = 1, h = 1) { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); }
+function tile(g, x, y, s, c, c2) {   // a small azulejo: frame, corner quarter-circles, a star
+  g.fillStyle = c2; g.fillRect(x, y, s, s);
+  g.fillStyle = c;
+  for (let i = 0; i < s; i++) { g.fillRect(x + i, y, 1, 1); g.fillRect(x, y + i, 1, 1); }
+  const m = Math.floor(s / 2);
+  g.fillRect(x + m, y + 2, 1, s - 4); g.fillRect(x + 2, y + m, s - 4, 1);
+  g.fillRect(x + m - 1, y + m - 1, 3, 3);
+}
+
+const SCENES = {
+  // The gap: a dashed outline (promise) and a breathing blue shape (what's allowed). A scan line reads it;
+  // where the shape spills past the outline, pixels glow orange.
+  gap: () => {
+    let t = 0, shape = 0;
+    const shapes = [
+      { r: [26, 22], spill: 0 }, { r: [26, 22], spill: 1 }, { r: [26, 22], spill: 2 }, { r: [26, 22], spill: 0 }, { r: [26, 22], spill: 3 },
+    ];
+    const cx = 80, cy = 48;
+    return (g, dt) => {
+      t += dt; if (t > 5.2) { t = 0; shape = (shape + 1) % shapes.length; }
+      const s = shapes[shape], grow = Math.min(1, t / 1.2), scan = Math.min(1, Math.max(0, (t - 1.2) / 2.2));
+      g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+      for (let y = 0; y < H; y += 10) for (let x = (y / 10) % 2 ? 5 : 0; x < W; x += 10) px(g, x, y, C.tile2);
+      const [rx, ry] = s.r, sx = cx - rx - 8, ex = cx + rx + 8;
+      for (let y = 6; y < H - 16; y++) for (let x = 8; x < W - 8; x++) {
+        const dx = (x - cx) / rx, dy = (y - cy) / ry, inPromise = dx * dx + dy * dy <= 1;
+        let a = Math.atan2(y - cy, x - cx), k = 1 + 0.06 * Math.sin(a * 3 + t * 2);
+        if (s.spill === 1) k += 0.55 * Math.max(0, Math.cos(a)) ** 6;
+        if (s.spill === 2) k += 0.5 * Math.max(0, Math.cos(a + 2.2)) ** 5 + 0.35 * Math.max(0, Math.cos(a - 2.0)) ** 8;
+        if (s.spill === 3) k += 0.7 * Math.max(0, -Math.sin(a)) ** 7;
+        const rr = (dx * dx + dy * dy) ** 0.5, inAllowed = rr <= 0.92 * k * grow;
+        if (inAllowed) {
+          const read = x < sx + (ex - sx) * scan + 16;
+          px(g, x, y, !inPromise && read ? (Math.random() < 0.85 ? C.flag : C.ink) : C.tile);
+        }
+        if (Math.abs(rr - 1) < 0.045 && ((x + y) % 4 < 2)) px(g, x, y, C.clear);
+      }
+      if (scan > 0 && scan < 1) { const x = sx + (ex - sx) * scan + 16; for (let y = 4; y < H - 14; y += 2) px(g, x, y, C.ink); }
+    };
+  },
+  // The wall: requests fly at a tiled wall and bounce; one finds the missing tile.
+  wall: () => {
+    const cols = 1, gapRow = 3, S = 10, wx = 96;
+    let dots = [], t = 0;
+    return (g, dt) => {
+      t += dt;
+      if (Math.random() < dt * 5) {
+        const through = Math.random() < 0.14;
+        dots.push({ x: -2, y: through ? 6 + gapRow * S + S / 2 - 1 : rnd(6, 82), vx: rnd(45, 70), vy: 0, through, life: 0, hit: false });
+      }
+      g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 2; c++) { if (r === gapRow && c === 0) continue; if (r === gapRow) continue; tile(g, wx + c * S, 6 + r * S, S, C.tile, C.tile2); }
+      for (const d of dots) {
+        d.life += dt; d.x += d.vx * dt; d.y += d.vy * dt;
+        if (!d.through && !d.hit && d.x >= wx - 2) { d.hit = true; d.vx = -rnd(15, 30); d.vy = rnd(-18, 18); }
+        const c = d.through && d.x > wx - 6 ? C.flag : d.hit ? C.tile2 : C.ink;
+        px(g, d.x, d.y, c, 2, 2);
+        if (d.through && d.x > wx) for (let k = 1; k < 7; k++) px(g, d.x - k * 3, d.y + (k % 2), C.flag, 1, 1);
+      }
+      dots = dots.filter((d) => d.x < W + 4 && d.x > -8 && d.life < 4);
+    };
+  },
+  // Four bars: rise and fall through real examples (current Reys: h19 h18 h40 h34 h39 h52 h66 h59); past the halfway line they turn orange.
+  bars: () => {
+    const SETS = [[0.03,0.92,0.01,0.96],[0.02,0.03,0.01,0.01],[0.92,0.01,0.0,0.0],[0.88,0.95,0.01,0.98],[0.25,0.06,0.01,0.01],[0.99,0.02,0.01,0.0],[0.01,0.01,1.0,0.01],[0.02,0.93,0.01,0.95]];
+    let i = 0, t = 0, cur = [0, 0, 0, 0];
+    return (g, dt) => {
+      t += dt; if (t > 2.4) { t = 0; i = (i + 1) % SETS.length; }
+      g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+      const base = 84, top = 10, bw = 22, gap = 14, x0 = (W - (4 * bw + 3 * gap)) / 2, mid = base - (base - top) / 2;
+      for (let x = 6; x < W - 6; x += 3) px(g, x, mid, C.tile2);
+      for (let k = 0; k < 4; k++) {
+        cur[k] += (SETS[i][k] - cur[k]) * Math.min(1, dt * 5);
+        const h = Math.max(2, Math.round((base - top) * cur[k])), x = x0 + k * (bw + gap);
+        for (let y = base - h; y < base; y += 3) for (let xx = 0; xx < bw; xx += 3) px(g, x + xx, y, cur[k] >= 0.5 ? C.flag : C.clear, 2, 2);
+        for (let xx = 0; xx < bw; xx++) px(g, x + xx, base + 2, C.tile2);
+      }
+    };
+  },
+  // The shield: flattering text-blocks fly at a tile and shatter; the warning light stays on.
+  shield: () => {
+    let words = [], bits = [], t = 0;
+    return (g, dt) => {
+      t += dt;
+      if (Math.random() < dt * 1.6) words.push({ x: -30, y: rnd(12, 70), w: Math.round(rnd(14, 30)), v: rnd(40, 60) });
+      g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) tile(g, 104 + c * 12, 20 + r * 12, 12, C.tile, C.tile2);
+      const on = 0.75 + 0.25 * Math.sin(t * 3);
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if ((x - 3.5) ** 2 + (y - 3.5) ** 2 < 14) px(g, 138 + x, 12 + y, on > 0.8 ? C.flag : C.flag);
+      for (const w of words) {
+        w.x += w.v * dt;
+        for (let k = 0; k < w.w; k += 3) px(g, w.x + k, w.y, C.ink, 2, 2);
+        if (w.x + w.w >= 102) { for (let k = 0; k < 14; k++) bits.push({ x: 101, y: w.y + rnd(-2, 2), vx: -rnd(10, 45), vy: rnd(-30, 30), life: 0 }); w.dead = true; }
+      }
+      words = words.filter((w) => !w.dead);
+      for (const b of bits) { b.life += dt; b.x += b.vx * dt; b.y += b.vy * dt; b.vy += 40 * dt; if (b.life < 0.9) px(g, b.x, b.y, b.life < 0.3 ? C.ink : C.tile2); }
+      bits = bits.filter((b) => b.life < 0.9);
+    };
+  },
+  // The blink: the eye closes over ~300 ms; the four bars fill in ~60 ms, long before it shuts.
+  blink: () => {
+    let t = 0;
+    return (g, dt) => {
+      t += dt; const cyc = t % 3.2;
+      g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+      const cx = 64, cy = 46, rx = 44, ry = 24;
+      // slowed ×8 so a person can see it: blink 0.3 s → 2.4 s, Reys 0.06 s → 0.48 s
+      const close = cyc < 0.4 ? 0 : cyc < 1.6 ? (cyc - 0.4) / 1.2 : cyc < 2.8 ? 1 - (cyc - 1.6) / 1.2 : 0;
+      const lid = ry * 2 * close;
+      for (let y = cy - ry; y <= cy + ry; y++) for (let x = cx - rx; x <= cx + rx; x++) {
+        const d = ((x - cx) / rx) ** 2 + ((y - cy) / (ry * (1 - 0.35 * Math.abs((x - cx) / rx)))) ** 2;
+        if (d > 1) continue;
+        if (y < cy - ry + lid / 2 || y > cy + ry - lid / 2) { if ((x + y) % 2) px(g, x, y, C.tile2); continue; }
+        const pr = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5;
+        px(g, x, y, pr < 7 ? C.bg : pr < 13 ? C.tile : C.ink);
+      }
+      const fill = cyc < 0.4 ? 0 : Math.min(1, (cyc - 0.4) / 0.48);
+      const vals = [.03, .92, .01, .96];
+      for (let k = 0; k < 4; k++) {
+        const x = 122 + k * 7, h = Math.round(44 * vals[k] * fill);
+        for (let y = 0; y < Math.max(1, h); y += 2) px(g, x, 70 - y, vals[k] >= .5 ? C.flag : C.clear, 4, 1);
+        for (let xx = 0; xx < 4; xx++) px(g, x + xx, 72, C.tile2);
+      }
+    };
+  },
+};
+
+document.querySelectorAll(".scene").forEach((el) => {
+  const cv = el.querySelector("canvas"); cv.width = W; cv.height = H;
+  const g = cv.getContext("2d"), draw = SCENES[el.dataset.scene]();
+  let visible = true, last = performance.now();
+  const frame = (now) => { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (visible) draw(g, dt); requestAnimationFrame(frame); };
+  if (REDUCED) { for (let i = 0; i < 90; i++) draw(g, 1 / 30); return; }   // one settled, still frame
+  for (let i = 0; i < 40; i++) draw(g, 1 / 30);                              // never an empty first frame
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(el);
+  requestAnimationFrame(frame);
+});
+function azulejos() {
+  const cv = document.getElementById("azulejos"); if (!cv) return;
+  const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = Math.max(1, r.width * dpr); cv.height = Math.max(1, r.height * dpr);
+  const g = cv.getContext("2d"); g.scale(dpr, dpr);
+  const col = css("--tile") || "#2346d8", S = 72; g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.3;
+  for (let y = 0; y < r.height + S; y += S) for (let x = 0; x < r.width + S; x += S) {
+    g.save(); g.translate(x, y);
+    g.globalAlpha = 0.45; g.strokeRect(0, 0, S, S);
+    g.globalAlpha = 0.6; for (const [cx, cy] of [[0, 0], [S, 0], [0, S], [S, S]]) { g.beginPath(); g.arc(cx, cy, S * 0.36, 0, Math.PI * 2); g.stroke(); }
+    const c = S / 2, a = S * 0.3, b = S * 0.09;
+    g.globalAlpha = 0.75; g.beginPath(); g.moveTo(c, c - a); g.lineTo(c + b, c - b); g.lineTo(c + a, c); g.lineTo(c + b, c + b); g.lineTo(c, c + a); g.lineTo(c - b, c + b); g.lineTo(c - a, c); g.lineTo(c - b, c - b); g.closePath(); g.fill();
+    g.globalAlpha = 0.45; g.beginPath(); g.arc(c, c, S * 0.42, 0, Math.PI * 2); g.stroke();
+    g.restore();
+  }
+}
+azulejos();
+addEventListener("resize", () => { clearTimeout(azulejos.t); azulejos.t = setTimeout(azulejos, 120); });
+const recolor = () => { readColors(); azulejos(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", recolor);
+new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
+</body>
+</html>
