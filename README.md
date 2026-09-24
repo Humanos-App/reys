@@ -26,6 +26,8 @@ the numbers are early.
 - [Meet Reys](https://humanos-app.github.io/reys/): what it does, in plain language
 - [Technical details](https://humanos-app.github.io/reys/technical.html): real outputs, results against Jev
   and Laya, and how it was built
+- [How Reys is trained](TRAINING.md): the model, the generated data and how labels are proven, training,
+  evaluation, and what it still gets wrong
 
 <p align="right">
   <sub>LISBONAI · 2026</sub>
