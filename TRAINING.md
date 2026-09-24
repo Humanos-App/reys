@@ -75,6 +75,79 @@ version, cost about $11 in API calls.
 - **Calibration:** one temperature fitted on validation only, never on a test set.
 - **Hardware:** one H100, 17 minutes.
 
+## The math
+
+What Reys computes and optimises, exactly. (Unlike write-ups that reconstruct other decision models from the
+outside, this is what our code does.)
+
+**Input.** A mandate is $x = (d, r)$: the description $d$ the person reads and the rules $r$ that govern the
+permission (tools, fixed values, rule expressions), serialised to text. There are four questions
+$i \in \{\text{limit}, \text{change}, \text{promise}, \text{deletion}\}$ and each label $y_i \in \{0, 1\}$ is
+proven by the checker, never annotated.
+
+**One answer.** Question $i$ is written in front of the mandate with two answer markers:
+
+$$[\mathrm{CLS}]\; q_i\; [\mathrm{SEP}]\; [\mathrm{MASK}]\,\text{no}\; [\mathrm{MASK}]\,\text{yes}\; [\mathrm{SEP}]\; x\; [\mathrm{SEP}]$$
+
+The encoder $f_\theta$ gives a hidden state $h$ at each marker, and a small scorer $g$ turns each into a number:
+$z_i^{\text{no}}, z_i^{\text{yes}}$. With two options the softmax is a sigmoid of the margin
+$s_i = z_i^{\text{yes}} - z_i^{\text{no}}$:
+
+$$p_i(x) = P(y_i = 1 \mid x) = \sigma(s_i / T)$$
+
+The four answers are **independent** yes/no probabilities, not one choice among four: a mandate can fail two
+questions at once.
+
+**Loss.** A strictly proper scoring rule per answer (Laya's): the log score plus half the spherical score, so the
+expected reward is maximised only by reporting the true probability. With $q = (1 - p_i, p_i)$ and the true
+option $y_i$:
+
+$$\mathcal{L}_{\text{point}} = -\frac{1}{4N}\sum_{n}\sum_{i}\Big[\log q_{y_i} + \tfrac12\,\frac{q_{y_i}}{\lVert q \rVert_2}\Big]$$
+
+**Selection and calibration.** After each epoch we score validation by Brier,
+$\frac{1}{M}\sum (p - y)^2$, and keep the best epoch. Then one temperature $T$ is fitted on validation only, by
+minimising cross-entropy over a grid $T \in [0.5, 5]$. The token embeddings (197M of 307M encoder parameters) are
+frozen; everything else is trained with AdamW, warmup then cosine decay.
+
+**Reading the mandate once (packed layout).** The layout above reads $x$ four times. The packed layout reads it
+once, with the four question blocks after it:
+
+$$[\mathrm{CLS}]\; x\; [\mathrm{SEP}] \;\big|\; B_1 \;\big|\; B_2 \;\big|\; B_3 \;\big|\; B_4$$
+
+and an attention mask shaped like a tree. With $\mathrm{seg}(t) = 0$ for mandate tokens and $k$ for block $B_k$,
+token $a$ may attend to token $b$ iff
+
+$$\mathrm{seg}(b) = 0 \;\lor\; \mathrm{seg}(a) = \mathrm{seg}(b)$$
+
+and, in the encoder's local layers, also $|\mathrm{pos}(a) - \mathrm{pos}(b)| \le 64$. Every block takes the
+same position ids, right after the mandate, so each sits where it would if it were alone. All four questions fit
+in ~730 tokens instead of 4 × ~390 (39 ms instead of 68 ms on a MacBook GPU). Because the mandate tokens no longer
+see a question, the model has to be trained in this layout, not only served in it.
+
+**Using the pairs (tried, not shipped).** Every training example comes as a minimal pair $(x^c, x^b)$: the correct
+mandate and the same one with one thing changed. The pointwise loss scores each side alone. The pair term
+adds what the pair *means*. Let $\delta_i = y_i^b - y_i^c$:
+
+- where the change flips the answer ($\delta_i = \pm 1$), a Bradley–Terry term asks the side that should say
+  "yes" to score above the other: $-\log \sigma\big(\delta_i\,(s_i^b - s_i^c)\big)$;
+- where it doesn't ($\delta_i = 0$: decoys, and the questions the change doesn't touch), the harmless change
+  shouldn't move the answer: $\big(\sigma(s_i^b) - \sigma(s_i^c)\big)^2$.
+
+$$\mathcal{L} = \mathcal{L}_{\text{point}} + \lambda\, \mathcal{L}_{\text{pair}}, \qquad \lambda = 0.5$$
+
+This uses no new data, only the structure the generator already builds. It targets the weakest number below:
+pairs where only the words changed.
+
+*First result* (packed layout, 8 epochs, $\lambda = 0.5$): it does what it was built for. Text-only pairs both
+right go from 44% to 64%, and on real requests accuracy rises from 87% to 90% with calibration error 0.13 → 0.09.
+But the sealed hand-written set falls to the "always fine" line (86.7%) and the real limit question to 75%, and the
+fitted temperature nearly doubles: the Bradley–Terry term is unbounded in the margin, so raw scores get extreme.
+Not shipped. Next: a smaller $\lambda$ or a bounded margin.
+
+**What the math doesn't fix.** Temperature fitted on synthetic validation doesn't transfer to real requests
+(overconfidence below). That's a shift between the data and the world, not a flaw in the loss, and the fix is
+real, human-reviewed examples.
+
 ## Evaluation
 
 Nothing we evaluate on was used to tune the model or the generator:
